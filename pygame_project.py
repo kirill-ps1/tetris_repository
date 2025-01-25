@@ -1,11 +1,35 @@
 import os
 import sys
+from operator import index
 
 import pygame
 from pygame import time
+from random import randint
 
-FPS = 50
+FPS = 20
 WIDTH, HEIGHT = 500, 620
+
+figures = [['.##..',
+            '..##.',],
+           ['..##.',
+            '.##..'],
+           ['.###.',
+            '.#...'],
+           ['.###.',
+            '...#.'],
+           ['.###.',
+            '..#..'],
+           ['####.',
+            '.....'],
+           ['.##..',
+            '.##..']]
+
+board = ['..........', '..........', '..........', '..........', '..........',
+         '..........', '..........', '..........', '..........', '..........',
+         '..........', '..........', '..........', '..........', '..........',
+         '..........', '..........', '..........', '..........', '..........']
+
+falling = False
 
 
 def terminate():
@@ -67,12 +91,25 @@ def load_level(filename):
     return list(map(lambda x: x.ljust(max_width, '.'), level_map))
 
 
-class Block(pygame.sprite.Sprite):
-    def __init__(self, tile_type, pos_x, pos_y):
+class BoardBlock(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y):
         super().__init__(tiles_group, all_sprites)
-        self.image = tile_images[tile_type]
+        self.image = tile_images['empty']
         self.rect = self.image.get_rect().move(
             tile_width * pos_x + 10, tile_height * pos_y + 10)
+
+
+class Block(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y):
+        super().__init__(player_group, all_sprites)
+        self.image = tile_images['block']
+        self.rect = self.image.get_rect().move(
+            tile_width * pos_x + 10, tile_height * pos_y + 10)
+        self.timer = time.get_ticks()
+
+    def update(self):
+        if (a := time.get_ticks()) - self.timer / 1000 == int(a / 1000):
+            ...
 
 
 def generate_level(level):
@@ -80,7 +117,9 @@ def generate_level(level):
     for y in range(len(level)):
         for x in range(len(level[y])):
             if level[y][x] == '.':
-                Block('empty', x, y)
+                BoardBlock(x, y)
+            elif level[y][x] == '#':
+                Block(x, y)
     return new_player, x, y
 
 
@@ -94,9 +133,10 @@ tiles_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 
 tile_images = {
-    'empty': load_image('square.png')
+    'empty': load_image('square.png'),
+    'block': load_image('square1.png')
 }
-level = load_level('tetris.txt')
+level = board
 tile_width = tile_height = 30
 
 player, level_x, level_y = generate_level(level)
@@ -105,6 +145,14 @@ while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             terminate()
+    if not falling:
+        board[0] = '.' * (b := randint(0, 5)) + figures[(c := randint(0, 6))][0] + '.' * (10 - b - 5)
+        board[1] = '.' * b + figures[c][1] + '.' * (10 - b - 5)
+        for i in all_sprites:
+            i.kill()
+        player, level_x, level_y = generate_level(board)
+        print(len(board))
+        falling = True
     screen.fill('white')
     tiles_group.draw(screen)
     player_group.draw(screen)
