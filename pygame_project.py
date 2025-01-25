@@ -1,34 +1,34 @@
 import os
 import sys
-from operator import index
 
 import pygame
-from pygame import time
+import time
 from random import randint
 
 FPS = 20
 WIDTH, HEIGHT = 500, 620
 
-figures = [['.##..',
-            '..##.',],
-           ['..##.',
-            '.##..'],
-           ['.###.',
-            '.#...'],
-           ['.###.',
-            '...#.'],
-           ['.###.',
-            '..#..'],
-           ['####.',
-            '.....'],
-           ['.##..',
-            '.##..']]
+figures = [['##..',
+            '.##.', ],
+           ['.##.',
+            '##..'],
+           ['###.',
+            '#...'],
+           ['###.',
+            '..#.'],
+           ['###.',
+            '.#..'],
+           ['####',
+            '....'],
+           ['##..',
+            '##..']]
 
 board = ['..........', '..........', '..........', '..........', '..........',
          '..........', '..........', '..........', '..........', '..........',
          '..........', '..........', '..........', '..........', '..........',
          '..........', '..........', '..........', '..........', '..........']
 
+num = [i for i in range(1, 22)]
 falling = False
 
 
@@ -105,7 +105,9 @@ class Block(pygame.sprite.Sprite):
         self.image = tile_images['block']
         self.rect = self.image.get_rect().move(
             tile_width * pos_x + 10, tile_height * pos_y + 10)
-        self.timer = time.get_ticks()
+        self.timer = pygame.time.get_ticks()
+        self.y = 0
+        self.x = randint(0, 5)
 
     def update(self):
         if (a := time.get_ticks()) - self.timer / 1000 == int(a / 1000):
@@ -146,13 +148,25 @@ while True:
         if event.type == pygame.QUIT:
             terminate()
     if not falling:
-        board[0] = '.' * (b := randint(0, 5)) + figures[(c := randint(0, 6))][0] + '.' * (10 - b - 5)
-        board[1] = '.' * b + figures[c][1] + '.' * (10 - b - 5)
+        timer = pygame.time.get_ticks()
+        board[0] = '.' * (b := randint(0, 6)) + figures[(c := randint(0, 6))][0] + '.' * (10 - b - 4)
+        board[1] = '.' * b + figures[c][1] + '.' * (10 - b - 4)
         for i in all_sprites:
             i.kill()
         player, level_x, level_y = generate_level(board)
-        print(len(board))
         falling = True
+        d = 0
+    elif falling:
+        time.sleep(1)
+        d += 1
+        if '#' in board[d]:
+            board[d + 1] = board[d + 1][:b] + board[d][b:b + 4] + board[d + 1][b + 4:10]
+        board[d] = board[d][:b] + board[d - 1][b:b + 4] + board[d][b + 4:10]
+        board[d - 1] = board[d - 1][:b] + '.' * len(board[d - 1][b:-list(reversed(board[d - 1])).index('#')]) + \
+                        board[d - 1][-list(reversed(board[d - 1])).index('#'):]
+        for i in all_sprites:
+            i.kill()
+        player, level_x, level_y = generate_level(board)
     screen.fill('white')
     tiles_group.draw(screen)
     player_group.draw(screen)
