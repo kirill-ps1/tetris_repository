@@ -3,9 +3,8 @@ import sys
 import time
 
 import pygame
-from random import randint, choice
-
-from PyQt6.QtBluetooth import QBluetoothLocalDevice
+import pprint
+from random import choice, randint
 
 FPS = 20
 WIDTH, HEIGHT = 600, 620
@@ -106,7 +105,7 @@ class Block(pygame.sprite.Sprite):
 
 
 class FallenBlock(pygame.sprite.Sprite):
-    def __init__(self, block_x, block_y, color='empty'):
+    def __init__(self, block_x, block_y, color):
         super().__init__(tiles_group, all_sprites)
         self.image = tile_images[color]
         self.rect = self.image.get_rect().move(
@@ -117,27 +116,37 @@ def generate_level(lev):
     x, y = None, None
     for y in range(len(lev)):
         for x in range(len(lev[y])):
-            if lev[y][x] == 'b':
-                Block(x, y)
-            elif lev[y][x] == 'f':
-                FallenBlock(x, y)
+            if lev[y][x] == 'o':
+                Block(y, x, 'empty')
+            elif lev[y][x][1] == 'b':
+                Block(y, x, lev[y][x][0])
+            elif lev[y][x][1] == 'f':
+                FallenBlock(y, x, lev[y][x][0])
     return x, y
 
 
-def createFigure():
-    figure = {'color': choice(COLORS),
+def createFigure(color):
+    fig = {'color': color,
               'shape': (shape := choice(list(figures.keys()))),
-              'position': choice(figures[shape]),
+              'position': randint(0, len(figures[shape]) - 1),
               'x': int(CUP_W / 2) - int(FIGURE_W / 2),
               'y': -2}
-    return figure
+    return fig
 
 
-def addToCup(cup_, fig):
-    for x in range(FIGURE_W):
-        for y in range(FIGURE_H):
-            if figures[fig['shape']][fig['rotation']][y][x] != 'o':
-                cup_[x + fig['x']][y + fig['y']] = fig['color']
+def addToCup(fig):
+    for i in range(FIGURE_W):
+        for j in range(FIGURE_H):
+            if figures[fig['shape']][fig['position']][j][i] != 'o':
+                cup[i + fig['x']][j + fig['y']] = (fig['color'], 'f')
+
+
+def figureFalling(fig):
+    for i in range(FIGURE_W):
+        for j in range(FIGURE_H):
+            if figures[fig['shape']][fig['position']][j][i] != 'o':
+                tiles_group.sprites()[(i + 1) * (j + 1)].kill()
+                Block(i + fig['x'], j + fig['y'], fig['color'])
 
 
 def speed_(p):
@@ -153,8 +162,10 @@ def figureInCup(fig_x, fig_y):
 def moveIsPossible(f, poss_x=0, poss_y=0):
     for i in range(FIGURE_W):
         for j in range(FIGURE_H):
-            if figures[f['shape']][f['position']] or j + f['y'] + poss_y < 0:
+            if figures[f['shape']][f['position']][j][i] == 'o' or j + f['y'] + poss_y < 0:
                 continue
+            if not figureInCup(i + f['x'] + poss_x, j + f['y'] + poss_y):
+                return False
             if cup[i + f['x'] + poss_x][j + f['y'] + poss_y] != 'o':
                 return False
     return True
@@ -173,26 +184,49 @@ tile_images = {
     'empty': load_image('empty_square.png'),
     'red': load_image('red_square.png'),
     'blue': load_image('green_square.png'),
-    'green': load_image('green_square.png')
+    'green': load_image('green_square.png'),
+    'yellow':load_image('yellow_square.png')
 }
+cup = [['o'] * CUP_H for _ in range(CUP_W)]
+x, y = generate_level(cup)
 
+col = randint(0, 3)
+figure = createFigure(COLORS[col])
+last_move_down = time.time()
+last_side_move = time.time()
+fall = time.time()
 playing = True
-figure = createFigure()
 move_right = False
 move_left = False
 points = 0
-level, fall_speed = speed_(points)
-fall = time.time()
-cup = [['o'] * CUP_H for _ in range(CUP_W)]
+level, fall_speed = 1, 0.25
 
 while playing:
     if not figure:
-        figure = createFigure()
+        col = randint(0, 3)
+        figure = createFigure(COLORS[col])
+        fall = time.time()
+        if not moveIsPossible(figure):
+            playing = False
 
     for event in pygame.event.get():
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_SPACE:
                 ...
-    if fall - time.time() > fall_speed:
-        if ...:
-            ...
+        if event.type == pygame.QUIT:
+            terminate()
+    if time.time() - fall > fall_speed:
+        if not moveIsPossible(figure, poss_y=1):
+            addToCup(figure)
+            figure = None
+        else:
+            figure['y'] += 1
+            fall = time.time()
+    screen.fill('white')
+    for i in all_sprites:
+        i.kill()
+    generate_level(cup)
+    if not figure is None:
+        figureFalling(figure)
+    tiles_group.draw(screen)
+    pygame.display.flip()
