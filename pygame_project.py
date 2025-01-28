@@ -1,35 +1,41 @@
 import os
 import sys
+import time
 
 import pygame
-import time
-from random import randint
+from random import randint, choice
+
+from PyQt6.QtBluetooth import QBluetoothLocalDevice
 
 FPS = 20
-WIDTH, HEIGHT = 500, 620
+WIDTH, HEIGHT = 600, 620
+BLOCK, CUP_H, CUP_W = 30, 20, 10
+FIGURE_W, FIGURE_H = 5, 5
 
-figures = [['##..',
-            '.##.', ],
-           ['.##.',
-            '##..'],
-           ['###.',
-            '#...'],
-           ['###.',
-            '..#.'],
-           ['###.',
-            '.#..'],
-           ['####',
-            '....'],
-           ['##..',
-            '##..']]
+COLORS = ['red', 'blue', 'green', 'yellow']
 
-board = ['..........', '..........', '..........', '..........', '..........',
-         '..........', '..........', '..........', '..........', '..........',
-         '..........', '..........', '..........', '..........', '..........',
-         '..........', '..........', '..........', '..........', '..........']
+figures = {'S': [['ooooo', 'ooooo', 'ooxxo', 'oxxoo', 'ooooo'],
+                 ['ooooo', 'ooxoo', 'ooxxo', 'oooxo', 'ooooo']],
+           'Z': [['ooooo', 'ooooo', 'oxxoo', 'ooxxo', 'ooooo'],
+                 ['ooooo', 'ooxoo', 'oxxoo', 'oxooo', 'ooooo']],
+           'J': [['ooooo', 'oxooo', 'oxxxo', 'ooooo', 'ooooo'],
+                 ['ooooo', 'ooxxo', 'ooxoo', 'ooxoo', 'ooooo'],
+                 ['ooooo', 'ooooo', 'oxxxo', 'oooxo', 'ooooo'],
+                 ['ooooo', 'ooxoo', 'ooxoo', 'oxxoo', 'ooooo']],
+           'L': [['ooooo', 'oooxo', 'oxxxo', 'ooooo', 'ooooo'],
+                 ['ooooo', 'ooxoo', 'ooxoo', 'ooxxo', 'ooooo'],
+                 ['ooooo', 'ooooo', 'oxxxo', 'oxooo', 'ooooo'],
+                 ['ooooo', 'oxxoo', 'ooxoo', 'ooxoo', 'ooooo']],
+           'I': [['ooxoo', 'ooxoo', 'ooxoo', 'ooxoo', 'ooooo'],
+                 ['ooooo', 'ooooo', 'xxxxo', 'ooooo', 'ooooo']],
+           'O': [['ooooo', 'ooooo', 'oxxoo', 'oxxoo', 'ooooo']],
+           'T': [['ooooo', 'ooxoo', 'oxxxo', 'ooooo', 'ooooo'],
+                 ['ooooo', 'ooxoo', 'ooxxo', 'ooxoo', 'ooooo'],
+                 ['ooooo', 'ooooo', 'oxxxo', 'ooxoo', 'ooooo'],
+                 ['ooooo', 'ooxoo', 'oxxoo', 'ooxoo', 'ooooo']]}
 
 num = [i for i in range(1, 22)]
-falling = False
+falling = None
 
 
 def terminate():
@@ -59,12 +65,12 @@ def start_screen():
                   "Если в правилах несколько строк,",
                   "приходится выводить их построчно"]
 
-    fon = pygame.transform.scale(load_image('fon.jpg'), (WIDTH, HEIGHT))
+    fon = pygame.transform.scale(load_image('Screenshot_1.jpg'), (WIDTH, HEIGHT))
     screen.blit(fon, (0, 0))
     font = pygame.font.Font(None, 30)
     text_coord = 50
     for line in intro_text:
-        string_rendered = font.render(line, 1, pygame.Color('black'))
+        string_rendered = font.render(line, 1, pygame.Color('Gray'))
         intro_rect = string_rendered.get_rect()
         text_coord += 10
         intro_rect.top = text_coord
@@ -91,85 +97,102 @@ def load_level(filename):
     return list(map(lambda x: x.ljust(max_width, '.'), level_map))
 
 
-class BoardBlock(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y):
-        super().__init__(tiles_group, all_sprites)
-        self.image = tile_images['empty']
-        self.rect = self.image.get_rect().move(
-            tile_width * pos_x + 10, tile_height * pos_y + 10)
-
-
 class Block(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y):
-        super().__init__(player_group, all_sprites)
-        self.image = tile_images['block']
+    def __init__(self, pos_x, pos_y, color='empty'):
+        super().__init__(tiles_group, all_sprites)
+        self.image = tile_images[color]
         self.rect = self.image.get_rect().move(
-            tile_width * pos_x + 10, tile_height * pos_y + 10)
-        self.timer = pygame.time.get_ticks()
-        self.y = 0
-        self.x = randint(0, 5)
-
-    def update(self):
-        if (a := time.get_ticks()) - self.timer / 1000 == int(a / 1000):
-            ...
+            10 + BLOCK * pos_x, 10 + BLOCK * pos_y)
 
 
-def generate_level(level):
-    new_player, x, y = None, None, None
-    for y in range(len(level)):
-        for x in range(len(level[y])):
-            if level[y][x] == '.':
-                BoardBlock(x, y)
-            elif level[y][x] == '#':
+class FallenBlock(pygame.sprite.Sprite):
+    def __init__(self, block_x, block_y, color='empty'):
+        super().__init__(tiles_group, all_sprites)
+        self.image = tile_images[color]
+        self.rect = self.image.get_rect().move(
+            10 + BLOCK * block_x, 10 + BLOCK * block_y)
+
+
+def generate_level(lev):
+    x, y = None, None
+    for y in range(len(lev)):
+        for x in range(len(lev[y])):
+            if lev[y][x] == 'b':
                 Block(x, y)
-    return new_player, x, y
+            elif lev[y][x] == 'f':
+                FallenBlock(x, y)
+    return x, y
+
+
+def createFigure():
+    figure = {'color': choice(COLORS),
+              'shape': (shape := choice(list(figures.keys()))),
+              'position': choice(figures[shape]),
+              'x': int(CUP_W / 2) - int(FIGURE_W / 2),
+              'y': -2}
+    return figure
+
+
+def addToCup(cup_, fig):
+    for x in range(FIGURE_W):
+        for y in range(FIGURE_H):
+            if figures[fig['shape']][fig['rotation']][y][x] != 'o':
+                cup_[x + fig['x']][y + fig['y']] = fig['color']
+
+
+def speed_(p):
+    lev = int(p / 10) + 1
+    speed = 0.27 - (lev * 0.02)
+    return level, speed
+
+
+def figureInCup(fig_x, fig_y):
+    return 0 <= fig_x < CUP_W and fig_y < CUP_H
+
+
+def moveIsPossible(f, poss_x=0, poss_y=0):
+    for i in range(FIGURE_W):
+        for j in range(FIGURE_H):
+            if figures[f['shape']][f['position']] or j + f['y'] + poss_y < 0:
+                continue
+            if cup[i + f['x'] + poss_x][j + f['y'] + poss_y] != 'o':
+                return False
+    return True
 
 
 pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Тетрис')
 clock = pygame.time.Clock()
+start_screen()
 
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
-player_group = pygame.sprite.Group()
 
 tile_images = {
-    'empty': load_image('square.png'),
-    'block': load_image('square1.png')
+    'empty': load_image('empty_square.png'),
+    'red': load_image('red_square.png'),
+    'blue': load_image('green_square.png'),
+    'green': load_image('green_square.png')
 }
-level = board
-tile_width = tile_height = 30
 
-player, level_x, level_y = generate_level(level)
+playing = True
+figure = createFigure()
+move_right = False
+move_left = False
+points = 0
+level, fall_speed = speed_(points)
+fall = time.time()
+cup = [['o'] * CUP_H for _ in range(CUP_W)]
 
-while True:
+while playing:
+    if not figure:
+        figure = createFigure()
+
     for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            terminate()
-    if not falling:
-        timer = pygame.time.get_ticks()
-        board[0] = '.' * (b := randint(0, 6)) + figures[(c := randint(0, 6))][0] + '.' * (10 - b - 4)
-        board[1] = '.' * b + figures[c][1] + '.' * (10 - b - 4)
-        for i in all_sprites:
-            i.kill()
-        player, level_x, level_y = generate_level(board)
-        falling = True
-        d = 0
-    elif falling:
-        time.sleep(1)
-        d += 1
-        if '#' in board[d]:
-            board[d + 1] = board[d + 1][:b] + board[d][b:b + 4] + board[d + 1][b + 4:10]
-        board[d] = board[d][:b] + board[d - 1][b:b + 4] + board[d][b + 4:10]
-        board[d - 1] = board[d - 1][:b] + '.' * len(board[d - 1][b:-list(reversed(board[d - 1])).index('#')]) + \
-                        board[d - 1][-list(reversed(board[d - 1])).index('#'):]
-        for i in all_sprites:
-            i.kill()
-        player, level_x, level_y = generate_level(board)
-    screen.fill('white')
-    tiles_group.draw(screen)
-    player_group.draw(screen)
-    pygame.draw.rect(screen, 'gray', (7, 7, 306, 606), 2, 4)
-    pygame.display.flip()
-    clock.tick(FPS)
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_SPACE:
+                ...
+    if fall - time.time() > fall_speed:
+        if ...:
+            ...
