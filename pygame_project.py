@@ -145,7 +145,6 @@ def figureFalling(fig):
     for i in range(FIGURE_W):
         for j in range(FIGURE_H):
             if figures[fig['shape']][fig['position']][j][i] != 'o':
-                tiles_group.sprites()[(i + 1) * (j + 1)].kill()
                 Block(i + fig['x'], j + fig['y'], fig['color'])
 
 
