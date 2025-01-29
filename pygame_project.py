@@ -59,17 +59,19 @@ def load_image(name, colorkey=None):
 
 
 def start_screen():
-    intro_text = ["Тетрис", "",
-                  "Правила игры",
-                  "Если в правилах несколько строк,",
-                  "приходится выводить их построчно"]
+    intro_text = ["                     ТЕТРИС ДЛЯ ЧАЙНИКОВ", "",
+                  "                            Правила игры",
+                  "В этой игре фигуры движутся вниз самостоятельно",
+                  "стрелочками влево и вправо можно двигать фигурки",
+                  "При нажатии стрелочки вниз, фигурки движутся быстрее",
+                  "                            Желаем удачи!"]
 
-    fon = pygame.transform.scale(load_image('Screenshot_1.jpg'), (WIDTH, HEIGHT))
+    fon = pygame.transform.scale(load_image('fon1.jpg'), (WIDTH, HEIGHT))
     screen.blit(fon, (0, 0))
     font = pygame.font.Font(None, 30)
     text_coord = 50
     for line in intro_text:
-        string_rendered = font.render(line, 1, pygame.Color('Gray'))
+        string_rendered = font.render(line, 1, pygame.Color(238, 32, 77))
         intro_rect = string_rendered.get_rect()
         text_coord += 10
         intro_rect.top = text_coord
@@ -127,10 +129,10 @@ def generate_level(lev):
 
 def createFigure(color):
     fig = {'color': color,
-              'shape': (shape := choice(list(figures.keys()))),
-              'position': randint(0, len(figures[shape]) - 1),
-              'x': int(CUP_W / 2) - int(FIGURE_W / 2),
-              'y': -2}
+           'shape': (shape := choice(list(figures.keys()))),
+           'position': randint(0, len(figures[shape]) - 1),
+           'x': int(CUP_W / 2) - int(FIGURE_W / 2),
+           'y': -2}
     return fig
 
 
@@ -184,7 +186,7 @@ tile_images = {
     'red': load_image('red_square.png'),
     'blue': load_image('green_square.png'),
     'green': load_image('green_square.png'),
-    'yellow':load_image('yellow_square.png')
+    'yellow': load_image('yellow_square.png')
 }
 cup = [['o'] * CUP_H for _ in range(CUP_W)]
 x, y = generate_level(cup)
