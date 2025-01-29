@@ -216,20 +216,23 @@ while playing:
                 figure['x'] -= 1
                 move_right = False
                 move_left = True
-            if event.key == pygame.K_RIGHT and moveIsPossible(figure, poss_x=1):
+            elif event.key == pygame.K_RIGHT and moveIsPossible(figure, poss_x=1):
                 move_right = True
                 move_left = False
                 figure['x'] += 1
+            elif event.key == pygame.K_UP:
+                figure['position'] = (figure['position'] + 1) % len(figures[figure['shape']])
+                if not moveIsPossible(figure):
+                    figure['position'] = (figure['position'] - 1) % len(figures[figure['shape']])
+
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_SPACE:
                 ...
-            if event.key == pygame.K_LEFT:
+            elif event.key == pygame.K_LEFT:
                 move_left = False
-            if event.key == pygame.K_RIGHT:
+            elif event.key == pygame.K_RIGHT:
                 move_right = False
 
-    if move_right or move_left:
-        ...
     if time.time() - fall > fall_speed:
         if not moveIsPossible(figure, poss_y=1):
             addToCup(figure)
