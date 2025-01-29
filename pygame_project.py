@@ -3,7 +3,6 @@ import sys
 import time
 
 import pygame
-import pprint
 from random import choice, randint
 
 FPS = 20
@@ -71,7 +70,7 @@ def start_screen():
     font = pygame.font.Font(None, 30)
     text_coord = 50
     for line in intro_text:
-        string_rendered = font.render(line, 1, pygame.Color(238, 32, 77))
+        string_rendered = font.render(line, 1, pygame.Color(175, 65, 68))
         intro_rect = string_rendered.get_rect()
         text_coord += 10
         intro_rect.top = text_coord
@@ -184,7 +183,7 @@ tiles_group = pygame.sprite.Group()
 tile_images = {
     'empty': load_image('empty_square.png'),
     'red': load_image('red_square.png'),
-    'blue': load_image('green_square.png'),
+    'blue': load_image('blue_square.png'),
     'green': load_image('green_square.png'),
     'yellow': load_image('yellow_square.png')
 }
@@ -193,8 +192,7 @@ x, y = generate_level(cup)
 
 col = randint(0, 3)
 figure = createFigure(COLORS[col])
-last_move_down = time.time()
-last_side_move = time.time()
+last_side = time.time()
 fall = time.time()
 playing = True
 move_right = False
@@ -211,11 +209,27 @@ while playing:
             playing = False
 
     for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            terminate()
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_LEFT and moveIsPossible(figure, poss_x=-1):
+                figure['x'] -= 1
+                move_right = False
+                move_left = True
+            if event.key == pygame.K_RIGHT and moveIsPossible(figure, poss_x=1):
+                move_right = True
+                move_left = False
+                figure['x'] += 1
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_SPACE:
                 ...
-        if event.type == pygame.QUIT:
-            terminate()
+            if event.key == pygame.K_LEFT:
+                move_left = False
+            if event.key == pygame.K_RIGHT:
+                move_right = False
+
+    if move_right or move_left:
+        ...
     if time.time() - fall > fall_speed:
         if not moveIsPossible(figure, poss_y=1):
             addToCup(figure)
