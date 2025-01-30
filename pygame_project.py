@@ -7,7 +7,7 @@ from random import choice, randint
 
 FPS = 20
 WIDTH, HEIGHT = 600, 620
-BLOCK, CUP_H, CUP_W = 24, 20, 10
+BLOCK, CUP_H, CUP_W = 25, 20, 10
 FIGURE_W, FIGURE_H = 5, 5
 
 COLORS = ['red', 'blue', 'green', 'yellow']
@@ -88,13 +88,18 @@ def start_screen():
         pygame.display.flip()
         clock.tick(FPS)
 
+def pause_screen():
+    pause = pygame.Surface((600, 620), pygame.SRCALPHA)
+    pause.fill((45, 45, 255, 127))
+    screen.blit(pause, (0, 0))
+
 
 class Block(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y, color='empty'):
         super().__init__(tiles_group, all_sprites)
         self.image = tile_images[color]
         self.rect = self.image.get_rect().move(
-            10 + BLOCK * pos_x, 10 + BLOCK * pos_y)
+            50 + BLOCK * pos_x, 50 + BLOCK * pos_y)
 
 
 class FallenBlock(pygame.sprite.Sprite):
@@ -102,7 +107,7 @@ class FallenBlock(pygame.sprite.Sprite):
         super().__init__(tiles_group, all_sprites)
         self.image = tile_images[color]
         self.rect = self.image.get_rect().move(
-            10 + BLOCK * block_x, 10 + BLOCK * block_y)
+            50 + BLOCK * block_x, 50 + BLOCK * block_y)
 
 
 class Figure:
@@ -126,7 +131,8 @@ def generate_level(lev):
 
 def createFigure(color):
     shape = choice(list(figures.keys()))
-    position = randint(0, len(figures[shape]) - 1)
+    if shape == 'I': position = 1
+    else: position = 0
     fig = Figure(shape, color, position)
     return fig
 
@@ -167,6 +173,28 @@ def moveIsPossible(f, poss_x=0, poss_y=0):
     return True
 
 
+def layerCheck(layer):
+    for w in range(CUP_W):
+        if cup[w][layer] == 'o':
+            return False
+    return True
+
+
+def removeLayers():
+    removed_layers = 0
+    layer = CUP_H - 1
+    while layer >= 0:
+        if layerCheck(layer):
+            for y1 in range(layer, 0, -1):
+                for x1 in range(CUP_W):
+                    cup[x1][y1] = cup[x1][y1 - 1]
+            for x2 in range(CUP_W):
+                cup[x2][0] = 'o'
+            removed_layers += 1
+        else:
+            layer -= 1
+
+
 pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Тетрис')
@@ -183,77 +211,84 @@ tile_images = {
     'green': load_image('green_square.png'),
     'yellow': load_image('yellow_square.png')
 }
-cup = [['o'] * CUP_H for _ in range(CUP_W)]
-x, y = generate_level(cup)
+while True:
+    cup = [['o'] * CUP_H for _ in range(CUP_W)]
+    x, y = generate_level(cup)
 
-col = randint(0, 3)
-figure = createFigure(COLORS[col])
-last_side = time.time()
-fall = time.time()
-playing = True
-move_right = False
-move_left = False
-move_down = False
-points = 0
-level, fall_speed = 1, 0.25
+    col = randint(0, 3)
+    figure = createFigure(COLORS[col])
+    last_down = time.time()
+    fall = time.time()
+    playing = True
+    move_right = False
+    move_left = False
+    move_down = False
 
-while playing:
-    if not figure:
-        col = randint(0, 3)
-        figure = createFigure(COLORS[col])
-        fall = time.time()
-        if not moveIsPossible(figure):
-            playing = False
+    level, fall_speed = 1, 0.25
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            terminate()
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_LEFT and moveIsPossible(figure, poss_x=-1):
-                figure.x -= 1
-                move_right = False
-                move_left = True
-                move_down = False
-            elif event.key == pygame.K_RIGHT and moveIsPossible(figure, poss_x=1):
-                move_right = True
-                move_left = False
-                move_down = False
-                figure.x += 1
-            elif event.key == pygame.K_DOWN and moveIsPossible(figure, poss_y=1):
-                move_down = True
-                move_right = False
-                move_left = False
-                figure.y += 1
-            elif event.key == pygame.K_UP:
-                figure.position = (figure.position + 1) % len(figures[figure.shape])
-                if not moveIsPossible(figure):
-                    figure.position = (figure.position - 1) % len(figures[figure.shape])
-
-        if event.type == pygame.KEYUP:
-            if event.key == pygame.K_SPACE:
-                ...
-            elif event.key == pygame.K_LEFT:
-                move_left = False
-            elif event.key == pygame.K_RIGHT:
-                move_right = False
-            elif event.key == pygame.K_DOWN:
-                move_down = False
-
-    if time.time() - fall > fall_speed:
-        if not moveIsPossible(figure, poss_y=1):
-            addToCup(figure)
-            figure = None
-        else:
-            figure.y += 1
+    while playing:
+        if not figure:
+            col = randint(0, 3)
+            figure = createFigure(COLORS[col])
             fall = time.time()
-    screen.fill(pygame.Color(150, 150, 150))
-    for i in all_sprites:
-        i.kill()
-    generate_level(cup)
-    if not figure is None:
-        if figure.y != -2:
-            figureFalling(figure)
-    pygame.draw.rect(screen, 'black', (10, 10, 246, 486))
-    tiles_group.draw(screen)
-    pygame.draw.rect(screen, 'white', (10, 10, 246, 486), 3)
-    pygame.display.flip()
+            if not moveIsPossible(figure):
+                playing = False
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT and moveIsPossible(figure, poss_x=-1):
+                    figure.x -= 1
+                    move_right = False
+                    move_left = True
+                    move_down = False
+                elif event.key == pygame.K_RIGHT and moveIsPossible(figure, poss_x=1):
+                    move_right = True
+                    move_left = False
+                    move_down = False
+                    figure.x += 1
+                elif event.key == pygame.K_DOWN and moveIsPossible(figure, poss_y=1):
+                    move_down = True
+                    move_right = False
+                    move_left = False
+                    figure.y += 1
+                elif event.key == pygame.K_UP:
+                    figure.position = (figure.position + 1) % len(figures[figure.shape])
+                    if not moveIsPossible(figure):
+                        figure.position = (figure.position - 1) % len(figures[figure.shape])
+
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_SPACE:
+                    ...
+                elif event.key == pygame.K_LEFT:
+                    move_left = False
+                elif event.key == pygame.K_RIGHT:
+                    move_right = False
+                elif event.key == pygame.K_DOWN:
+                    move_down = False
+
+        if move_down and time.time() - last_down > 0.1 and moveIsPossible(figure, poss_y=1):
+            figure.y += 1
+            last_down = time.time()
+
+        if time.time() - fall > fall_speed:
+            if not moveIsPossible(figure, poss_y=1):
+                addToCup(figure)
+                removeLayers()
+                figure = None
+            else:
+                figure.y += 1
+                fall = time.time()
+        screen.fill(pygame.Color(80, 80, 80))
+        for i in all_sprites:
+            i.kill()
+        generate_level(cup)
+        if not figure is None:
+            if figure.y > -2:
+                figureFalling(figure)
+        pygame.draw.rect(screen, 'black', (50, 50, BLOCK * CUP_W + 6, BLOCK * CUP_H + 6))
+        tiles_group.draw(screen)
+        pygame.draw.rect(screen, pygame.Color(180, 180, 180), (50, 50, BLOCK * CUP_W + 6, BLOCK * CUP_H + 6), 3)
+        pygame.display.flip()
+        pause_screen()
