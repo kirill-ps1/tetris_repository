@@ -58,25 +58,28 @@ def load_image(name, colorkey=None):
 
 
 def start_screen():
-    intro_text = ["                     ТЕТРИС ДЛЯ ЧАЙНИКОВ", "",
-                  "                            Правила игры",
+    intro_text = ["ТЕТРИС ДЛЯ ЧАЙНИКОВ", "",
+                  "Инструкция",
                   "В этой игре фигуры движутся вниз самостоятельно",
                   "стрелочками влево и вправо можно двигать фигурки",
-                  "При нажатии стрелочки вниз, фигурки движутся быстрее",
-                  "                            Желаем удачи!"]
+                  "При нажатии стрелочки вниз, фигурки движутся быстрее", "",
+                  "Нажмите на любую кнопку для начала"]
 
-    fon = pygame.transform.scale(load_image('fon1.jpg'), (WIDTH, HEIGHT))
+    fon = pygame.transform.scale(load_image('fon.jpg'), (WIDTH, HEIGHT))
     screen.blit(fon, (0, 0))
-    font = pygame.font.Font(None, 30)
+    font = pygame.font.Font(None, 29)
     text_coord = 50
+    pygame.draw.rect(screen, pygame.Color(45, 45, 45), (12, 55, 576, 270))
+    pygame.draw.rect(screen, pygame.Color(90, 90, 90), (12, 55, 576, 270), 3)
     for line in intro_text:
-        string_rendered = font.render(line, 1, pygame.Color(175, 65, 68))
+        string_rendered = font.render(line, 1, pygame.Color(225, 225, 225))
         intro_rect = string_rendered.get_rect()
         text_coord += 10
         intro_rect.top = text_coord
         intro_rect.x = 10
         text_coord += intro_rect.height
-        screen.blit(string_rendered, intro_rect)
+        text_rect = string_rendered.get_rect(center=(WIDTH / 2, text_coord))
+        screen.blit(string_rendered, text_rect)
 
     while True:
         for ev in pygame.event.get():
@@ -87,6 +90,7 @@ def start_screen():
                 return
         pygame.display.flip()
         clock.tick(FPS)
+
 
 def pause_screen():
     pause = pygame.Surface((600, 620), pygame.SRCALPHA)
@@ -131,8 +135,10 @@ def generate_level(lev):
 
 def createFigure(color):
     shape = choice(list(figures.keys()))
-    if shape == 'I': position = 1
-    else: position = 0
+    if shape == 'I':
+        position = 1
+    else:
+        position = 0
     fig = Figure(shape, color, position)
     return fig
 
@@ -181,6 +187,7 @@ def layerCheck(layer):
 
 
 def removeLayers():
+    global score, points
     removed_layers = 0
     layer = CUP_H - 1
     while layer >= 0:
@@ -193,6 +200,15 @@ def removeLayers():
             removed_layers += 1
         else:
             layer -= 1
+    points += removed_layers
+    if removed_layers == 1:
+        score += 40 * (points + 1)
+    elif removed_layers == 2:
+        score += 100 * (points + 1)
+    elif removed_layers == 3:
+        score += 300 * (points + 1)
+    elif removed_layers == 4:
+        score += 1200 * (points + 1)
 
 
 pygame.init()
@@ -219,6 +235,8 @@ while True:
     figure = createFigure(COLORS[col])
     last_down = time.time()
     fall = time.time()
+    score = 0
+    points = 0
     playing = True
     move_right = False
     move_left = False
@@ -290,5 +308,15 @@ while True:
         pygame.draw.rect(screen, 'black', (50, 50, BLOCK * CUP_W + 6, BLOCK * CUP_H + 6))
         tiles_group.draw(screen)
         pygame.draw.rect(screen, pygame.Color(180, 180, 180), (50, 50, BLOCK * CUP_W + 6, BLOCK * CUP_H + 6), 3)
+        f = pygame.font.Font(None, 35)
+        pygame.draw.rect(screen, 'black', (390, 90, 120, 40))
+        pygame.draw.rect(screen, pygame.Color(180, 180, 180), (390, 90, 120, 40), 3)
+        string = f.render(str(score), 1, pygame.Color(225, 225, 225))
+        rect = string.get_rect()
+        rect.x = 395
+        rect.y = 100
+        rect.topright = (503, 100)
+        screen.blit(string, rect)
         pygame.display.flip()
         pause_screen()
+    print(score)
