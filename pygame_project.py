@@ -156,14 +156,14 @@ def figureInCup(fig_x, fig_y):
     return 0 <= fig_x < CUP_W and fig_y < CUP_H
 
 
-def moveIsPossible(f, poss_x=0, poss_y=0):
+def moveIsPossible(fig, poss_x=0, poss_y=0):
     for i in range(FIGURE_W):
         for j in range(FIGURE_H):
-            if figures[f.shape][f.position][j][i] == 'o' or j + f.y + poss_y < 0:
+            if figures[fig.shape][fig.position][j][i] == 'o' or j + fig.y + poss_y < 0:
                 continue
-            if not figureInCup(i + f.x + poss_x, j + f.y + poss_y):
+            if not figureInCup(i + fig.x + poss_x, j + fig.y + poss_y):
                 return False
-            if cup[i + f.x + poss_x][j + f.y + poss_y] != 'o':
+            if cup[i + fig.x + poss_x][j + fig.y + poss_y] != 'o':
                 return False
     return True
 
@@ -199,13 +199,13 @@ def removeLayers():
     elif removed_layers == 4:
         score += 1200 * (points + 1)
 
+
 def draw_score():
     font = pygame.font.Font(None, 65)
-    tit_score = font.render("score:", True, "green")
+    tit_score = font.render("score:", True, pygame.Color(54, 156, 78))
     text_x = 390
     text_y = 450
     screen.blit(tit_score, (text_x, text_y))
-
 
 
 pygame.init()
@@ -217,8 +217,8 @@ pygame.mixer.music.load('data/tetris.mp3')
 pygame.display.set_caption('Тетрис')
 clock = pygame.time.Clock()
 start_screen()
-#background = pygame.image.load("data/fon_fon.jpg")
-#background = pygame.transform.scale(background, (width, height))
+# background = pygame.image.load("data/fon_fon.jpg")
+# background = pygame.transform.scale(background, (width, height))
 
 
 all_sprites = pygame.sprite.Group()
@@ -236,12 +236,13 @@ while True:
     pygame.mixer.music.play(loops=-1)
     cup = [['o'] * CUP_H for _ in range(CUP_W)]
     x, y = generate_level(cup)
-   # screen.blit(background, (0, 0))
+    # screen.blit(background, (0, 0))
     all_sprites.draw(screen)
 
     col = randint(0, 3)
     figure = createFigure(COLORS[col])
     last_down = time.time()
+    last_left_right = time.time()
     fall = time.time()
     score = 0
     points = 0
@@ -265,7 +266,6 @@ while True:
                 terminate()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT and moveIsPossible(figure, poss_x=-1):
-                    figure.x -= 1
                     move_right = False
                     move_left = True
                     move_down = False
@@ -273,7 +273,6 @@ while True:
                     move_right = True
                     move_left = False
                     move_down = False
-                    figure.x += 1
                 elif event.key == pygame.K_DOWN and moveIsPossible(figure, poss_y=1):
                     move_down = True
                     move_right = False
@@ -294,9 +293,16 @@ while True:
                 elif event.key == pygame.K_DOWN:
                     move_down = False
 
-        if move_down and time.time() - last_down > 0.1 and moveIsPossible(figure, poss_y=1):
+        if move_down and time.time() - last_down > 0.05 and moveIsPossible(figure, poss_y=1):
             figure.y += 1
             last_down = time.time()
+
+        elif (move_left or move_right) and time.time() - last_left_right > 0.12:
+            if move_left and moveIsPossible(figure, poss_x=-1):
+                figure.x -= 1
+            elif move_right and moveIsPossible(figure, poss_x=1):
+                figure.x += 1
+            last_left_right = time.time()
 
         if time.time() - fall > fall_speed:
             if not moveIsPossible(figure, poss_y=1):
