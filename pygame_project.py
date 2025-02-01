@@ -37,6 +37,7 @@ falling = None
 
 
 def terminate():
+    pygame.mixer.quit()
     pygame.quit()
     sys.exit()
 
@@ -65,7 +66,7 @@ def start_screen():
                   "При нажатии стрелочки вниз, фигурки движутся быстрее", "",
                   "Нажмите на любую кнопку для начала"]
 
-    fon = pygame.transform.scale(load_image('fon.jpg'), (WIDTH, HEIGHT))
+    fon = pygame.transform.scale(load_image('fon1.jpg'), (WIDTH, HEIGHT))
     screen.blit(fon, (0, 0))
     font = pygame.font.Font(None, 29)
     text_coord = 50
@@ -90,12 +91,6 @@ def start_screen():
                 return
         pygame.display.flip()
         clock.tick(FPS)
-
-
-def pause_screen():
-    pause = pygame.Surface((600, 620), pygame.SRCALPHA)
-    pause.fill((45, 45, 255, 127))
-    screen.blit(pause, (0, 0))
 
 
 class Block(pygame.sprite.Sprite):
@@ -157,12 +152,6 @@ def figureFalling(fig):
                 Block(i + fig.x, j + fig.y, fig.color)
 
 
-def speed_(p):
-    lev = int(p / 10) + 1
-    speed = 0.27 - (lev * 0.02)
-    return level, speed
-
-
 def figureInCup(fig_x, fig_y):
     return 0 <= fig_x < CUP_W and fig_y < CUP_H
 
@@ -212,7 +201,10 @@ def removeLayers():
 
 
 pygame.init()
+pygame.mixer.init()
+pygame.mixer.music.set_volume(0.7)
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.mixer.music.load('data/tetris.mp3')
 pygame.display.set_caption('Тетрис')
 clock = pygame.time.Clock()
 start_screen()
@@ -225,9 +217,11 @@ tile_images = {
     'red': load_image('red_square.png'),
     'blue': load_image('blue_square.png'),
     'green': load_image('green_square.png'),
-    'yellow': load_image('yellow_square.png')
+    'yellow': load_image('yellow_square.png'),
 }
+
 while True:
+    pygame.mixer.music.play(loops=-1)
     cup = [['o'] * CUP_H for _ in range(CUP_W)]
     x, y = generate_level(cup)
 
@@ -318,5 +312,3 @@ while True:
         rect.topright = (503, 100)
         screen.blit(string, rect)
         pygame.display.flip()
-        pause_screen()
-    print(score)
