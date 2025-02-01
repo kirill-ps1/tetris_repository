@@ -199,8 +199,17 @@ def removeLayers():
     elif removed_layers == 4:
         score += 1200 * (points + 1)
 
+def draw_score():
+    font = pygame.font.Font(None, 65)
+    tit_score = font.render("score:", True, "green")
+    text_x = 390
+    text_y = 450
+    screen.blit(tit_score, (text_x, text_y))
+
+
 
 pygame.init()
+pygame.font.init()
 pygame.mixer.init()
 pygame.mixer.music.set_volume(0.7)
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -208,6 +217,9 @@ pygame.mixer.music.load('data/tetris.mp3')
 pygame.display.set_caption('Тетрис')
 clock = pygame.time.Clock()
 start_screen()
+#background = pygame.image.load("data/fon_fon.jpg")
+#background = pygame.transform.scale(background, (width, height))
+
 
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
@@ -224,6 +236,8 @@ while True:
     pygame.mixer.music.play(loops=-1)
     cup = [['o'] * CUP_H for _ in range(CUP_W)]
     x, y = generate_level(cup)
+   # screen.blit(background, (0, 0))
+    all_sprites.draw(screen)
 
     col = randint(0, 3)
     figure = createFigure(COLORS[col])
@@ -303,12 +317,13 @@ while True:
         tiles_group.draw(screen)
         pygame.draw.rect(screen, pygame.Color(180, 180, 180), (50, 50, BLOCK * CUP_W + 6, BLOCK * CUP_H + 6), 3)
         f = pygame.font.Font(None, 35)
-        pygame.draw.rect(screen, 'black', (390, 90, 120, 40))
-        pygame.draw.rect(screen, pygame.Color(180, 180, 180), (390, 90, 120, 40), 3)
+        pygame.draw.rect(screen, 'black', (390, 500, 120, 40))
+        pygame.draw.rect(screen, pygame.Color(180, 180, 180), (390, 500, 120, 40), 3)
         string = f.render(str(score), 1, pygame.Color(225, 225, 225))
+        draw_score()
         rect = string.get_rect()
         rect.x = 395
         rect.y = 100
-        rect.topright = (503, 100)
+        rect.topright = (503, 510)
         screen.blit(string, rect)
         pygame.display.flip()
