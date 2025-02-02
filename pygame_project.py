@@ -10,7 +10,14 @@ WIDTH, HEIGHT = 600, 620
 BLOCK, CUP_H, CUP_W = 25, 20, 10
 FIGURE_W, FIGURE_H = 5, 5
 
-COLORS = ['red', 'blue', 'green', 'yellow']
+COLORS = {'S': 'red',
+          'Z': 'orange',
+          'J': 'yellow',
+          'L': 'green',
+          'I': 'blue',
+          'O': 'dark_blue',
+          'T': 'violet'
+          }
 
 figures = {'S': [['ooooo', 'ooooo', 'ooxxo', 'oxxoo', 'ooooo'],
                  ['ooooo', 'ooxoo', 'ooxxo', 'oooxo', 'ooooo']],
@@ -125,8 +132,9 @@ def generate_level(lev):
     return x1, y2
 
 
-def create_figure(color):
+def create_figure():
     shape = choice(list(figures.keys()))
+    color = COLORS[shape]
     if shape == 'I':
         position = 1
     else:
@@ -227,6 +235,9 @@ tile_images = {
     'blue': load_image('blue_square.png'),
     'green': load_image('green_square.png'),
     'yellow': load_image('yellow_square.png'),
+    'orange': load_image('orange_square.png'),
+    'violet': load_image('violet_square.png'),
+    'dark_blue': load_image('dark_blue_square.png')
 }
 
 while True:
@@ -237,7 +248,7 @@ while True:
     all_sprites.draw(screen)
 
     col = randint(0, 3)
-    figure = create_figure(COLORS[col])
+    figure = create_figure()
     last_down = time.time()
     last_left_right = time.time()
     fall = time.time()
@@ -253,7 +264,7 @@ while True:
     while playing:
         if not figure:
             col = randint(0, 3)
-            figure = create_figure(COLORS[col])
+            figure = create_figure()
             fall = time.time()
             if not move_is_possible(figure):
                 playing = False
