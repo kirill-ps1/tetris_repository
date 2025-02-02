@@ -62,16 +62,18 @@ def start_screen():
     intro_text = ["ТЕТРИС ДЛЯ ЧАЙНИКОВ", "",
                   "Инструкция",
                   "В этой игре фигуры движутся вниз самостоятельно",
-                  "стрелочками влево и вправо можно двигать фигурки",
-                  "При нажатии стрелочки вниз, фигурки движутся быстрее", "",
+                  "Стрелкой влево/кнопкой A фигурки двигаются влево",
+                  "Стрелкой вправо/кнопкой D фигурки двигаются в право",
+                  "Стрелкой вниз/кнопкой S фигурки двигаются быстрее",
+                  "Стрелкой вверх/кнопкой W фигурки вращаются", "",
                   "Нажмите на любую кнопку для начала"]
 
     fon = pygame.transform.scale(load_image('fon1.jpg'), (WIDTH, HEIGHT))
     screen.blit(fon, (0, 0))
     font = pygame.font.Font(None, 29)
     text_coord = 50
-    pygame.draw.rect(screen, pygame.Color(45, 45, 45), (12, 55, 576, 270))
-    pygame.draw.rect(screen, pygame.Color(90, 90, 90), (12, 55, 576, 270), 3)
+    pygame.draw.rect(screen, pygame.Color(45, 45, 45), (12, 55, 576, 310))
+    pygame.draw.rect(screen, pygame.Color(90, 90, 90), (12, 55, 576, 310), 3)
     for line in intro_text:
         string_rendered = font.render(line, 1, pygame.Color(225, 225, 225))
         intro_rect = string_rendered.get_rect()
@@ -201,11 +203,30 @@ def removeLayers():
 
 
 def draw_score():
-    font = pygame.font.Font(None, 65)
+    font = pygame.font.Font(None, 45)
     tit_score = font.render("score:", True, pygame.Color(54, 156, 78))
     text_x = 390
-    text_y = 450
+    text_y = 480
     screen.blit(tit_score, (text_x, text_y))
+
+
+def draw_name():
+    font = pygame.font.Font(None, 75)
+    tit_score = font.render("TETRIS", True, pygame.Color(237, 118, 14))
+    text_x = 360
+    text_y = 20
+    screen.blit(tit_score, (text_x, text_y))
+
+
+def record(record=None):
+    font = pygame.font.Font(None, 45)
+    tit_score = font.render("record:", True, pygame.Color(54, 156, 78))
+    text_x = 390
+    text_y = 400
+    screen.blit(tit_score, (text_x, text_y))
+    pygame.draw.rect(screen, 'black', (390, 440, 120, 40))
+    pygame.draw.rect(screen, pygame.Color(180, 180, 180), (390, 440, 120, 40), 3)
+    # string = f.render(str(score), 1, pygame.Color(225, 225, 225))
 
 
 pygame.init()
@@ -265,32 +286,32 @@ while True:
             if event.type == pygame.QUIT:
                 terminate()
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT and moveIsPossible(figure, poss_x=-1):
-                    move_right = False
-                    move_left = True
-                    move_down = False
-                elif event.key == pygame.K_RIGHT and moveIsPossible(figure, poss_x=1):
-                    move_right = True
-                    move_left = False
-                    move_down = False
-                elif event.key == pygame.K_DOWN and moveIsPossible(figure, poss_y=1):
+                if event.key == pygame.K_UP or event.key == pygame.K_w:
+                    figure.position = (figure.position + 1) % len(figures[figure.shape])
+                    if not moveIsPossible(figure):
+                        figure.position = (figure.position - 1) % len(figures[figure.shape])
+                elif (event.key == pygame.K_DOWN or event.key == pygame.K_s)and moveIsPossible(figure, poss_y=1):
                     move_down = True
                     move_right = False
                     move_left = False
                     figure.y += 1
-                elif event.key == pygame.K_UP:
-                    figure.position = (figure.position + 1) % len(figures[figure.shape])
-                    if not moveIsPossible(figure):
-                        figure.position = (figure.position - 1) % len(figures[figure.shape])
+                elif (event.key == pygame.K_RIGHT or event.key == pygame.K_d)and moveIsPossible(figure, poss_x=1):
+                    move_right = True
+                    move_left = False
+                    move_down = False
+                elif (event.key == pygame.K_LEFT or event.key == pygame.K_a) and moveIsPossible(figure, poss_x=-1):
+                    move_right = False
+                    move_left = True
+                    move_down = False
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_SPACE:
                     ...
-                elif event.key == pygame.K_LEFT:
+                elif event.key == pygame.K_LEFT or event.key == pygame.K_a:
                     move_left = False
-                elif event.key == pygame.K_RIGHT:
+                elif event.key == pygame.K_RIGHT or event.key == pygame.K_d:
                     move_right = False
-                elif event.key == pygame.K_DOWN:
+                elif event.key == pygame.K_DOWN or event.key == pygame.K_s:
                     move_down = False
 
         if move_down and time.time() - last_down > 0.05 and moveIsPossible(figure, poss_y=1):
@@ -323,13 +344,15 @@ while True:
         tiles_group.draw(screen)
         pygame.draw.rect(screen, pygame.Color(180, 180, 180), (50, 50, BLOCK * CUP_W + 6, BLOCK * CUP_H + 6), 3)
         f = pygame.font.Font(None, 35)
-        pygame.draw.rect(screen, 'black', (390, 500, 120, 40))
-        pygame.draw.rect(screen, pygame.Color(180, 180, 180), (390, 500, 120, 40), 3)
+        pygame.draw.rect(screen, 'black', (390, 515, 120, 40))
+        pygame.draw.rect(screen, pygame.Color(180, 180, 180), (390, 515, 120, 40), 3)
         string = f.render(str(score), 1, pygame.Color(225, 225, 225))
         draw_score()
+        draw_name()
+        record()
         rect = string.get_rect()
         rect.x = 395
         rect.y = 100
-        rect.topright = (503, 510)
+        rect.topright = (503, 525)
         screen.blit(string, rect)
         pygame.display.flip()
