@@ -32,9 +32,6 @@ figures = {'S': [['ooooo', 'ooooo', 'ooxxo', 'oxxoo', 'ooooo'],
                  ['ooooo', 'ooooo', 'oxxxo', 'ooxoo', 'ooooo'],
                  ['ooooo', 'ooxoo', 'oxxoo', 'ooxoo', 'ooooo']]}
 
-num = [i for i in range(1, 22)]
-falling = None
-
 
 def terminate():
     pygame.mixer.quit()
@@ -66,7 +63,7 @@ def start_screen():
                   "При нажатии стрелочки вниз, фигурки движутся быстрее", "",
                   "Нажмите на любую кнопку для начала"]
 
-    fon = pygame.transform.scale(load_image('fon1.jpg'), (WIDTH, HEIGHT))
+    fon = pygame.transform.scale(load_image('fon.jpg'), (WIDTH, HEIGHT))
     screen.blit(fon, (0, 0))
     font = pygame.font.Font(None, 29)
     text_coord = 50
@@ -128,7 +125,7 @@ def generate_level(lev):
     return x1, y2
 
 
-def createFigure(color):
+def create_figure(color):
     shape = choice(list(figures.keys()))
     if shape == 'I':
         position = 1
@@ -138,49 +135,49 @@ def createFigure(color):
     return fig
 
 
-def addToCup(fig):
+def add_to_cup(fig):
     for i in range(FIGURE_W):
         for j in range(FIGURE_H):
             if figures[fig.shape][fig.position][j][i] != 'o':
                 cup[i + fig.x][j + fig.y] = (fig.color, 'f')
 
 
-def figureFalling(fig):
+def figure_falling(fig):
     for i in range(FIGURE_W):
         for j in range(FIGURE_H):
             if figures[fig.shape][fig.position][j][i] != 'o':
                 Block(i + fig.x, j + fig.y, fig.color)
 
 
-def figureInCup(fig_x, fig_y):
+def figure_in_cup(fig_x, fig_y):
     return 0 <= fig_x < CUP_W and fig_y < CUP_H
 
 
-def moveIsPossible(fig, poss_x=0, poss_y=0):
+def move_is_possible(fig, poss_x=0, poss_y=0):
     for i in range(FIGURE_W):
         for j in range(FIGURE_H):
             if figures[fig.shape][fig.position][j][i] == 'o' or j + fig.y + poss_y < 0:
                 continue
-            if not figureInCup(i + fig.x + poss_x, j + fig.y + poss_y):
+            if not figure_in_cup(i + fig.x + poss_x, j + fig.y + poss_y):
                 return False
             if cup[i + fig.x + poss_x][j + fig.y + poss_y] != 'o':
                 return False
     return True
 
 
-def layerCheck(layer):
+def layer_check(layer):
     for w in range(CUP_W):
         if cup[w][layer] == 'o':
             return False
     return True
 
 
-def removeLayers():
+def remove_layers():
     global score, points
     removed_layers = 0
     layer = CUP_H - 1
     while layer >= 0:
-        if layerCheck(layer):
+        if layer_check(layer):
             for y1 in range(layer, 0, -1):
                 for x1 in range(CUP_W):
                     cup[x1][y1] = cup[x1][y1 - 1]
@@ -240,7 +237,7 @@ while True:
     all_sprites.draw(screen)
 
     col = randint(0, 3)
-    figure = createFigure(COLORS[col])
+    figure = create_figure(COLORS[col])
     last_down = time.time()
     last_left_right = time.time()
     fall = time.time()
@@ -256,31 +253,31 @@ while True:
     while playing:
         if not figure:
             col = randint(0, 3)
-            figure = createFigure(COLORS[col])
+            figure = create_figure(COLORS[col])
             fall = time.time()
-            if not moveIsPossible(figure):
+            if not move_is_possible(figure):
                 playing = False
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT and moveIsPossible(figure, poss_x=-1):
+                if event.key == pygame.K_LEFT and move_is_possible(figure, poss_x=-1):
                     move_right = False
                     move_left = True
                     move_down = False
-                elif event.key == pygame.K_RIGHT and moveIsPossible(figure, poss_x=1):
+                elif event.key == pygame.K_RIGHT and move_is_possible(figure, poss_x=1):
                     move_right = True
                     move_left = False
                     move_down = False
-                elif event.key == pygame.K_DOWN and moveIsPossible(figure, poss_y=1):
+                elif event.key == pygame.K_DOWN and move_is_possible(figure, poss_y=1):
                     move_down = True
                     move_right = False
                     move_left = False
                     figure.y += 1
                 elif event.key == pygame.K_UP:
                     figure.position = (figure.position + 1) % len(figures[figure.shape])
-                    if not moveIsPossible(figure):
+                    if not move_is_possible(figure):
                         figure.position = (figure.position - 1) % len(figures[figure.shape])
 
             if event.type == pygame.KEYUP:
@@ -293,32 +290,32 @@ while True:
                 elif event.key == pygame.K_DOWN:
                     move_down = False
 
-        if move_down and time.time() - last_down > 0.05 and moveIsPossible(figure, poss_y=1):
+        if move_down and time.time() - last_down > 0.05 and move_is_possible(figure, poss_y=1):
             figure.y += 1
             last_down = time.time()
 
         elif (move_left or move_right) and time.time() - last_left_right > 0.12:
-            if move_left and moveIsPossible(figure, poss_x=-1):
+            if move_left and move_is_possible(figure, poss_x=-1):
                 figure.x -= 1
-            elif move_right and moveIsPossible(figure, poss_x=1):
+            elif move_right and move_is_possible(figure, poss_x=1):
                 figure.x += 1
             last_left_right = time.time()
 
         if time.time() - fall > fall_speed:
-            if not moveIsPossible(figure, poss_y=1):
-                addToCup(figure)
-                removeLayers()
+            if not move_is_possible(figure, poss_y=1):
+                add_to_cup(figure)
+                remove_layers()
                 figure = None
             else:
                 figure.y += 1
                 fall = time.time()
         screen.fill(pygame.Color(80, 80, 80))
-        for i in all_sprites:
-            i.kill()
+        for spr in all_sprites:
+            spr.kill()
         generate_level(cup)
         if not figure is None:
             if figure.y > -2:
-                figureFalling(figure)
+                figure_falling(figure)
         pygame.draw.rect(screen, 'black', (50, 50, BLOCK * CUP_W + 6, BLOCK * CUP_H + 6))
         tiles_group.draw(screen)
         pygame.draw.rect(screen, pygame.Color(180, 180, 180), (50, 50, BLOCK * CUP_W + 6, BLOCK * CUP_H + 6), 3)
