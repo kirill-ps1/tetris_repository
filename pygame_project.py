@@ -216,7 +216,7 @@ def draw_score(sc):
     text_x = 390
     text_y = 480
     screen.blit(tit_score, (text_x, text_y))
-    f = pygame.font.Font(None, 35)
+    f = pygame.font.Font(None, 37)
     pygame.draw.rect(screen, 'black', (390, 515, 120, 40))
     pygame.draw.rect(screen, pygame.Color(180, 180, 180), (390, 515, 120, 40), 3)
     string = f.render(str(sc), 1, pygame.Color(225, 225, 225))
@@ -235,15 +235,35 @@ def draw_name():
     screen.blit(tit_score, (text_x, text_y))
 
 
-def record(rec=None):
+def record(rec="0"):
     font = pygame.font.Font(None, 45)
-    tit_score = font.render("record:", True, pygame.Color(54, 156, 78))
+    tit_rec = font.render("record:", True, pygame.Color(54, 156, 78))
     text_x = 390
     text_y = 400
-    screen.blit(tit_score, (text_x, text_y))
-    pygame.draw.rect(screen, 'black', (390, 440, 120, 40))
-    pygame.draw.rect(screen, pygame.Color(180, 180, 180), (390, 440, 120, 40), 3)
-    # string = f.render(str(score), 1, pygame.Color(225, 225, 225))
+    screen.blit(tit_rec, (text_x, text_y))
+    f = pygame.font.Font(None, 37)
+    pygame.draw.rect(screen, 'black', (390, 435, 120, 40))
+    pygame.draw.rect(screen, pygame.Color(180, 180, 180), (390, 435, 120, 40), 3)
+    string = f.render(rec, 1, pygame.Color(225, 225, 125))
+    rect = string.get_rect()
+    rect.x = 395
+    rect.y = 100
+    rect.topright = (503, 445)
+    screen.blit(string, rect)
+
+def get_record():
+    try:
+        with open("record") as f:
+            return f.readlines()
+    except FileNotFoundError:
+        with open("record", "w") as f:
+            f.write("0")
+    return 0
+
+def set_record(rec, score):
+    r = max(int(rec), score)
+    with open("record", "w") as f:
+        f.write(str(r))
 
 
 pygame.init()
@@ -274,6 +294,7 @@ tile_images = {
 }
 
 while True:
+    rec = "".join(get_record())
     pygame.mixer.music.play(loops=-1)
     cup = [['o'] * CUP_H for _ in range(CUP_W)]
     x, y = generate_level(cup)
@@ -300,7 +321,9 @@ while True:
             figure = create_figure()
             fall = time.time()
             if not move_is_possible(figure):
+                set_record(rec, score)
                 playing = False
+
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -364,6 +387,7 @@ while True:
         tiles_group.draw(screen)
         pygame.draw.rect(screen, pygame.Color(180, 180, 180), (50, 50, BLOCK * CUP_W + 6, BLOCK * CUP_H + 6), 3)
         draw_score(score)
+        record(rec)
         draw_name()
-        record()
+        #record()
         pygame.display.flip()
