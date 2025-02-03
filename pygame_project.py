@@ -219,7 +219,7 @@ def draw_score(sc):
     f = pygame.font.Font(None, 37)
     pygame.draw.rect(screen, 'black', (390, 515, 120, 40))
     pygame.draw.rect(screen, pygame.Color(180, 180, 180), (390, 515, 120, 40), 3)
-    string = f.render(str(sc), 1, pygame.Color(225, 225, 225))
+    string = f.render(str(sc), 1, pygame.Color(225, 225, 125))
     rect = string.get_rect()
     rect.x = 395
     rect.y = 100
