@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+from itertools import count
 
 import pygame
 from random import choice, randint
@@ -11,9 +12,10 @@ WIDTH, HEIGHT = 600, 620
 BLOCK, CUP_H, CUP_W = 25, 20, 10
 FIGURE_W, FIGURE_H = 5, 5
 # background = pygame.image.load("data/fon_fon.jpg")
-#background = pygame.transform.scale(load_image("fon_fon.jpg"), (WIDTH, HEIGHT))
+background = pygame.transform.scale(pygame.image.load("data/fon_fon.jpg"), (WIDTH, HEIGHT))
     #picture of animation#
 pic_anim = [
+    pygame.image.load("data/Animation0.png"),
     pygame.image.load("data/Animation1.png"),
     pygame.image.load("data/Animation2.png"),
     pygame.image.load("data/Animation3.png")
@@ -133,15 +135,18 @@ class Figure:
 
 
 class Animation(pygame.sprite.Sprite):
-    def __init__(self, aim_image, w, h):
+    def __init__(self, anim_image, w, h):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.transform.scale(pygame.image.load(aim_image), (w, h))
+        self.image = pygame.transform.scale(pygame.image.load(anim_image), (w, h))
         self.rect = self.image.get_rect()
-        self.rect.x = 503
+        self.rect.x = 400
         self.rect.y = 300
+        self.count = 0
     def update(self):
-        screen.blit(self.image, (self.rect.x, self.rect.y))
-
+        if self.count + 1 >= 4:
+            self.count = 0
+        screen.blit(pic_anim[self.count], (self.rect.x, self.rect.y))
+        self.count += 1
 
 def generate_level(lev):
     x1, y2 = None, None
@@ -318,7 +323,6 @@ while True:
     cup = [['o'] * CUP_H for _ in range(CUP_W)]
     x, y = generate_level(cup)
     all_sprites.draw(screen)
-    anim.update()
 
     col = randint(0, 3)
     figure = create_figure()
@@ -390,11 +394,13 @@ while True:
             if not move_is_possible(figure, poss_y=1):
                 add_to_cup(figure)
                 remove_layers()
+                for i in range(3):
+                    screen.blit(pic_anim[i], (400, 300))
                 figure = None
             else:
                 figure.y += 1
                 fall = time.time()
-        screen.fill(pygame.Color(80, 80, 80))
+        screen.fill(pygame.Color(90, 90, 90))
         for i in all_sprites:
             i.kill()
         generate_level(cup)
@@ -406,5 +412,8 @@ while True:
         pygame.draw.rect(screen, pygame.Color(180, 180, 180), (50, 50, BLOCK * CUP_W + 6, BLOCK * CUP_H + 6), 3)
         draw_score(score)
         record(rec)
+        anim.update()
+        #screen.blit(pygame.image.load("data/Animation0.png"), (400, 300))
         draw_name()
         pygame.display.flip()
+        screen.blit(background, (0, 0))
