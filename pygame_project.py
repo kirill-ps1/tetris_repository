@@ -9,24 +9,8 @@ FPS = 20
 WIDTH, HEIGHT = 600, 620
 BLOCK, CUP_H, CUP_W = 25, 20, 10
 FIGURE_W, FIGURE_H = 5, 5
-    #picture of animation#
-pic_anim = [
-    pygame.image.load("data/Animation0.png"),
-    pygame.image.load("data/Animation1.png"),
-    pygame.image.load("data/Animation2.png"),
-    pygame.image.load("data/Animation3.png")
-]
+    #picture of animation
 
-rabbit_anim = [
-    pygame.image.load("data/Animation00.png"),
-    pygame.image.load("data/Animation01.png"),
-    pygame.image.load("data/Animation02.png"),
-    pygame.image.load("data/Animation03.png"),
-    pygame.image.load("data/Animation04.png"),
-    pygame.image.load("data/Animation05.png"),
-    pygame.image.load("data/Animation06.png"),
-    pygame.image.load("data/Animation07.png"),
-]
 COLORS = {'S': 'red',
           'Z': 'orange',
           'J': 'yellow',
@@ -83,6 +67,7 @@ def load_image(name, colorkey=None):
 
 
 def start_screen():
+    global fall_speed
     intro_text = ["ТЕТРИС ДЛЯ ЧАЙНИКОВ", "",
                   "Инструкция",
                   "В этой игре фигуры движутся вниз самостоятельно",
@@ -94,7 +79,6 @@ def start_screen():
     fon = pygame.transform.scale(load_image('fon1.jpg'), (WIDTH, HEIGHT))
     screen.blit(fon, (0, 0))
     font = pygame.font.Font(None, 29)
-    font1 = pygame.font.Font(None, 50)
     text_coord = 50
     pygame.draw.rect(screen, pygame.Color(45, 45, 45), (12, 55, 576, 310))
     pygame.draw.rect(screen, pygame.Color(90, 90, 90), (12, 55, 576, 310), 3)
@@ -119,16 +103,18 @@ def start_screen():
 
     while True:
         for ev in pygame.event.get():
-
             if ev.type == pygame.QUIT:
                 terminate()
             elif ev.type == pygame.MOUSEBUTTONUP:
                 mouse_position = pygame.mouse.get_pos()
                 if easy.collidepoint(mouse_position):
+                    fall_speed = 0.75
                     return 1
                 elif norm.collidepoint(mouse_position):
+                    fall_speed = 0.5
                     return 2
                 elif hard.collidepoint(mouse_position):
+                    fall_speed = 0.25
                     return 3
         pygame.display.flip()
         clock.tick(FPS)
@@ -157,19 +143,22 @@ class Figure:
 
 
 class Animation(pygame.sprite.Sprite):
-    def __init__(self, anim_image, x, y, w, h, picture_group):
-        pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.transform.scale(pygame.image.load(anim_image), (w, h))
+    def __init__(self, anim_image, x, y, w, h, pic):
+        super().__init__(pictures_group)
+        self.image = pygame.transform.scale(load_image(anim_image), (w, h))
         self.rect = self.image.get_rect()
-        self.gr = picture_group
-        self.rect.x = x                                #400
-        self.rect.y = y                                  #300
+        self.pic = pic
+        self.rect.x = x #400
+        self.rect.y = y #300
+        self.w, self.h = w, h
         self.count = 0
+        self.time = time.time()
+
     def update(self):
-        if self.count + 1 >= len(self.gr) * 20 + 1:
-            self.count = 0
-        screen.blit(self.gr[self.count // 20], (self.rect.x, self.rect.y))
-        self.count += 1
+        if time.time() - self.time > 0.05:
+             self.count = (self.count + 1) % len(self.pic)
+             self.image = pygame.transform.scale(self.pic[self.count], (self.w, self.h))
+             self.time = time.time()
 
 def generate_level(lev):
     x1, y2 = None, None
@@ -255,12 +244,13 @@ def remove_layers():
         score += 300 * (points + 1)
     elif removed_layers == 4:
         score += 1200 * (points + 1)
+    return removed_layers
 
 
 def draw_score(sc):
     font = pygame.font.Font(None, 45)
-    tit_score = font.render("score:", True, pygame.Color(54, 156, 78))
-    text_x = 390
+    tit_score = font.render("Score:", True, pygame.Color(54, 156, 78))
+    text_x = 400
     text_y = 480
     screen.blit(tit_score, (text_x, text_y))
     f = pygame.font.Font(None, 37)
@@ -282,22 +272,38 @@ def draw_name():
     screen.blit(tit_score, (text_x, text_y))
 
 
-def record(rec="0"):
+def record(reco="0"):
     font = pygame.font.Font(None, 45)
-    tit_rec = font.render("record:", True, pygame.Color(54, 156, 78))
-    text_x = 390
+    tit_rec = font.render("Record:", True, pygame.Color(54, 156, 78))
+    text_x = 400
     text_y = 400
     screen.blit(tit_rec, (text_x, text_y))
     f = pygame.font.Font(None, 37)
     pygame.draw.rect(screen, 'black', (390, 435, 120, 40))
     pygame.draw.rect(screen, pygame.Color(180, 180, 180), (390, 435, 120, 40), 3)
-    string = f.render(rec, 1, pygame.Color(225, 225, 125))
+    string = f.render(reco, 1, pygame.Color(225, 225, 125))
     rect = string.get_rect()
     rect.x = 395
     rect.y = 100
     rect.topright = (503, 445)
     screen.blit(string, rect)
 
+
+def draw_layers_counter(layers):
+    font = pygame.font.Font(None, 45)
+    tit_score = font.render("Layers:", True, pygame.Color(54, 156, 78))
+    text_x = 400
+    text_y = 305
+    screen.blit(tit_score, (text_x, text_y))
+    f = pygame.font.Font(None, 37)
+    pygame.draw.rect(screen, 'black', (390, 345, 120, 40))
+    pygame.draw.rect(screen, pygame.Color(180, 180, 180), (390, 345, 120, 40), 3)
+    string = f.render(str(layers), 1, pygame.Color(225, 225, 125))
+    rect = string.get_rect()
+    rect.x = 395
+    rect.y = 100
+    rect.topright = (503, 355)
+    screen.blit(string, rect)
 
 def get_record():
     try:
@@ -309,15 +315,12 @@ def get_record():
     return 0
 
 
-def set_record(rec, score):
-    r = max(int(rec), score)
+def set_record(r, sc):
+    r = max(int(r), sc)
     with open("record", "w") as f:
         f.write(str(r))
 
 
-anim = Animation(  "data/Animation0.png", 350, 340, 38, 51, pic_anim)
-rab = Animation( "data/Animation00.png",420, 300, 84, 97, rabbit_anim)
-anim20 = Animation(  "data/Animation0.png", 535, 340, 38, 51, pic_anim)
 
 pygame.init()
 pygame.font.init()
@@ -327,10 +330,29 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.mixer.music.load('data/tetris.mp3')
 pygame.display.set_caption('Тетрис')
 clock = pygame.time.Clock()
-a = start_screen()
+start_screen()
 
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
+pictures_group = pygame.sprite.Group()
+
+pic_anim = [
+    load_image("Animation0.png"),
+    load_image("Animation1.png"),
+    load_image("Animation2.png"),
+    load_image("Animation3.png")
+]
+
+rabbit_anim = [
+    load_image("Animation00.png"),
+    load_image("Animation01.png"),
+    load_image("Animation02.png"),
+    load_image("Animation03.png"),
+    load_image("Animation04.png"),
+    load_image("Animation05.png"),
+    load_image("Animation06.png"),
+    load_image("Animation07.png"),
+]
 
 tile_images = {
     'empty': load_image('blacksquare.png'),
@@ -355,20 +377,17 @@ while True:
     last_down = time.time()
     last_left_right = time.time()
     fall = time.time()
+    updating = time.time()
     score = 0
     points = 0
+    s = 0
+    update = False
     playing = True
     move_right = False
     move_left = False
     move_down = False
-    if a == 1:
-        fall_speed = 0.4
-    elif a == 2:
-        fall_speed = 0.25
-    else:
-        fall_speed = 0.17
 
-    level = 1
+    fall_speed = fall_speed
 
     while playing:
         if not figure:
@@ -425,13 +444,22 @@ while True:
         if time.time() - fall > fall_speed:
             if not move_is_possible(figure, poss_y=1):
                 add_to_cup(figure)
-                remove_layers()
-                for i in range(3):
-                    screen.blit(pic_anim[i], (400, 300))
+                s = remove_layers()
                 figure = None
             else:
                 figure.y += 1
                 fall = time.time()
+        if s > 0:
+            updating = time.time()
+            if not update:
+                rab = Animation("Animation00.png", 405, 160, 100, 120, rabbit_anim)
+            update = True
+        if update:
+            if time.time() - updating < 1.5:
+                rab.update()
+            else:
+                update = False
+                rab.kill()
         screen.fill(pygame.Color(90, 90, 90))
         for i in all_sprites:
             i.kill()
@@ -443,9 +471,8 @@ while True:
         tiles_group.draw(screen)
         pygame.draw.rect(screen, pygame.Color(180, 180, 180), (50, 50, BLOCK * CUP_W + 6, BLOCK * CUP_H + 6), 3)
         draw_score(score)
+        draw_layers_counter(points)
         record(rec)
-        anim.update()
-        rab.update()
-        anim20.update()
+        pictures_group.draw(screen)
         draw_name()
         pygame.display.flip()
