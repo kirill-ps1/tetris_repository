@@ -11,14 +11,23 @@ FPS = 20
 WIDTH, HEIGHT = 600, 620
 BLOCK, CUP_H, CUP_W = 25, 20, 10
 FIGURE_W, FIGURE_H = 5, 5
-# background = pygame.image.load("data/fon_fon.jpg")
-background = pygame.transform.scale(pygame.image.load("data/fon_fon.jpg"), (WIDTH, HEIGHT))
     #picture of animation#
 pic_anim = [
     pygame.image.load("data/Animation0.png"),
     pygame.image.load("data/Animation1.png"),
     pygame.image.load("data/Animation2.png"),
     pygame.image.load("data/Animation3.png")
+]
+
+rabbit_anim = [
+    pygame.image.load("data/Animation00.png"),
+    pygame.image.load("data/Animation01.png"),
+    pygame.image.load("data/Animation02.png"),
+    pygame.image.load("data/Animation03.png"),
+    pygame.image.load("data/Animation04.png"),
+    pygame.image.load("data/Animation05.png"),
+    pygame.image.load("data/Animation06.png"),
+    pygame.image.load("data/Animation07.png"),
 ]
 COLORS = {'S': 'red',
           'Z': 'orange',
@@ -135,17 +144,18 @@ class Figure:
 
 
 class Animation(pygame.sprite.Sprite):
-    def __init__(self, anim_image, w, h):
+    def __init__(self, anim_image, x, y, w, h, picture_group):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.transform.scale(pygame.image.load(anim_image), (w, h))
         self.rect = self.image.get_rect()
-        self.rect.x = 400
-        self.rect.y = 300
+        self.gr = picture_group
+        self.rect.x = x                                #400
+        self.rect.y = y                                  #300
         self.count = 0
     def update(self):
-        if self.count + 1 >= 4:
+        if self.count + 1 >= len(self.gr) * 20 + 1:
             self.count = 0
-        screen.blit(pic_anim[self.count], (self.rect.x, self.rect.y))
+        screen.blit(self.gr[self.count // 20], (self.rect.x, self.rect.y))
         self.count += 1
 
 def generate_level(lev):
@@ -292,7 +302,10 @@ def set_record(rec, score):
         f.write(str(r))
 
 
-anim = Animation("data/Animation0.png", 38, 51)
+anim = Animation(  "data/Animation0.png", 350, 340, 38, 51, pic_anim)
+rab = Animation( "data/Animation00.png",420, 300, 84, 97, rabbit_anim)
+anim20 = Animation(  "data/Animation0.png", 535, 340, 38, 51, pic_anim)
+
 pygame.init()
 pygame.font.init()
 pygame.mixer.init()
@@ -413,7 +426,7 @@ while True:
         draw_score(score)
         record(rec)
         anim.update()
-        #screen.blit(pygame.image.load("data/Animation0.png"), (400, 300))
+        rab.update()
+        anim20.update()
         draw_name()
         pygame.display.flip()
-        screen.blit(background, (0, 0))
