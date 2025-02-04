@@ -5,11 +5,19 @@ import time
 import pygame
 from random import choice, randint
 
+
 FPS = 20
 WIDTH, HEIGHT = 600, 620
 BLOCK, CUP_H, CUP_W = 25, 20, 10
 FIGURE_W, FIGURE_H = 5, 5
-
+# background = pygame.image.load("data/fon_fon.jpg")
+#background = pygame.transform.scale(load_image("fon_fon.jpg"), (WIDTH, HEIGHT))
+    #picture of animation#
+pic_anim = [
+    pygame.image.load("data/Animation1.png"),
+    pygame.image.load("data/Animation2.png"),
+    pygame.image.load("data/Animation3.png")
+]
 COLORS = {'S': 'red',
           'Z': 'orange',
           'J': 'yellow',
@@ -122,6 +130,17 @@ class Figure:
     def __init__(self, shape, color, position):
         self.shape, self.color, self.position = shape, color, position
         self.x, self.y = int(CUP_W / 2) - int(FIGURE_W / 2), -2
+
+
+class Animation(pygame.sprite.Sprite):
+    def __init__(self, aim_image, w, h):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.transform.scale(pygame.image.load(aim_image), (w, h))
+        self.rect = self.image.get_rect()
+        self.rect.x = 503
+        self.rect.y = 300
+    def update(self):
+        screen.blit(self.image, (self.rect.x, self.rect.y))
 
 
 def generate_level(lev):
@@ -251,6 +270,7 @@ def record(rec="0"):
     rect.topright = (503, 445)
     screen.blit(string, rect)
 
+
 def get_record():
     try:
         with open("record") as f:
@@ -260,12 +280,14 @@ def get_record():
             f.write("0")
     return 0
 
+
 def set_record(rec, score):
     r = max(int(rec), score)
     with open("record", "w") as f:
         f.write(str(r))
 
 
+anim = Animation("data/Animation0.png", 38, 51)
 pygame.init()
 pygame.font.init()
 pygame.mixer.init()
@@ -275,9 +297,6 @@ pygame.mixer.music.load('data/tetris.mp3')
 pygame.display.set_caption('Тетрис')
 clock = pygame.time.Clock()
 start_screen()
-# background = pygame.image.load("data/fon_fon.jpg")
-# background = pygame.transform.scale(background, (width, height))
-
 
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
@@ -298,8 +317,8 @@ while True:
     pygame.mixer.music.play(loops=-1)
     cup = [['o'] * CUP_H for _ in range(CUP_W)]
     x, y = generate_level(cup)
-    # screen.blit(background, (0, 0))
     all_sprites.draw(screen)
+    anim.update()
 
     col = randint(0, 3)
     figure = create_figure()
@@ -324,7 +343,6 @@ while True:
                 set_record(rec, score)
                 playing = False
 
-
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
@@ -333,12 +351,12 @@ while True:
                     figure.position = (figure.position + 1) % len(figures[figure.shape])
                     if not move_is_possible(figure):
                         figure.position = (figure.position - 1) % len(figures[figure.shape])
-                elif (event.key == pygame.K_DOWN or event.key == pygame.K_s)and move_is_possible(figure, poss_y=1):
+                elif (event.key == pygame.K_DOWN or event.key == pygame.K_s) and move_is_possible(figure, poss_y=1):
                     move_down = True
                     move_right = False
                     move_left = False
                     figure.y += 1
-                elif (event.key == pygame.K_RIGHT or event.key == pygame.K_d)and move_is_possible(figure, poss_x=1):
+                elif (event.key == pygame.K_RIGHT or event.key == pygame.K_d) and move_is_possible(figure, poss_x=1):
                     move_right = True
                     move_left = False
                     move_down = False
@@ -389,5 +407,4 @@ while True:
         draw_score(score)
         record(rec)
         draw_name()
-        #record()
         pygame.display.flip()
