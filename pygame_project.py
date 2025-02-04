@@ -1,11 +1,9 @@
 import os
 import sys
 import time
-from itertools import count
 
 import pygame
 from random import choice, randint
-
 
 FPS = 20
 WIDTH, HEIGHT = 600, 620
@@ -91,15 +89,24 @@ def start_screen():
                   "Стрелкой влево/кнопкой A фигурки двигаются влево",
                   "Стрелкой вправо/кнопкой D фигурки двигаются в право",
                   "Стрелкой вниз/кнопкой S фигурки двигаются быстрее",
-                  "Стрелкой вверх/кнопкой W фигурки вращаются", "",
-                  "Нажмите на любую кнопку для начала"]
+                  "Стрелкой вверх/кнопкой W фигурки вращаются"]
 
     fon = pygame.transform.scale(load_image('fon1.jpg'), (WIDTH, HEIGHT))
     screen.blit(fon, (0, 0))
     font = pygame.font.Font(None, 29)
+    font1 = pygame.font.Font(None, 50)
     text_coord = 50
     pygame.draw.rect(screen, pygame.Color(45, 45, 45), (12, 55, 576, 310))
     pygame.draw.rect(screen, pygame.Color(90, 90, 90), (12, 55, 576, 310), 3)
+    tit_score = font.render("Выберите сложность игры:", True, pygame.Color(225, 225, 225))
+    text_x = 23
+    text_y = 325
+    screen.blit(tit_score, (text_x, text_y))
+
+    easy = pygame.draw.rect(screen, pygame.Color("green"), (400, 320, 30, 30))
+    norm = pygame.draw.rect(screen, pygame.Color("yellow"), (435, 320, 30, 30))
+
+    hard = pygame.draw.rect(screen, pygame.Color("red"), (470, 320, 30, 30))
     for line in intro_text:
         string_rendered = font.render(line, 1, pygame.Color(225, 225, 225))
         intro_rect = string_rendered.get_rect()
@@ -112,11 +119,17 @@ def start_screen():
 
     while True:
         for ev in pygame.event.get():
+
             if ev.type == pygame.QUIT:
                 terminate()
-            elif ev.type == pygame.KEYDOWN or \
-                    ev.type == pygame.MOUSEBUTTONDOWN:
-                return
+            elif ev.type == pygame.MOUSEBUTTONUP:
+                mouse_position = pygame.mouse.get_pos()
+                if easy.collidepoint(mouse_position):
+                    return 1
+                elif norm.collidepoint(mouse_position):
+                    return 2
+                elif hard.collidepoint(mouse_position):
+                    return 3
         pygame.display.flip()
         clock.tick(FPS)
 
@@ -314,7 +327,7 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.mixer.music.load('data/tetris.mp3')
 pygame.display.set_caption('Тетрис')
 clock = pygame.time.Clock()
-start_screen()
+a = start_screen()
 
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
@@ -348,8 +361,14 @@ while True:
     move_right = False
     move_left = False
     move_down = False
+    if a == 1:
+        fall_speed = 0.4
+    elif a == 2:
+        fall_speed = 0.25
+    else:
+        fall_speed = 0.17
 
-    level, fall_speed = 1, 0.25
+    level = 1
 
     while playing:
         if not figure:
