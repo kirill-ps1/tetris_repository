@@ -1,7 +1,6 @@
 import os
 import sys
 import time
-from pickletools import long1
 
 import pygame
 from random import choice, randint
@@ -10,6 +9,7 @@ FPS = 20
 WIDTH, HEIGHT = 600, 620
 BLOCK, CUP_H, CUP_W = 25, 20, 10
 FIGURE_W, FIGURE_H = 5, 5
+fall_speed = 0
 # picture of animation
 
 COLORS = {'S': 'red',
@@ -80,18 +80,17 @@ def start_screen():
     fon = pygame.transform.scale(load_image('fon1.jpg'), (WIDTH, HEIGHT))
     screen.blit(fon, (0, 0))
     font = pygame.font.Font(None, 29)
-    text_coord = 50
-    pygame.draw.rect(screen, pygame.Color(45, 45, 45), (12, 55, 576, 310))
-    pygame.draw.rect(screen, pygame.Color(90, 90, 90), (12, 55, 576, 310), 3)
+    text_coord = 60
+    pygame.draw.rect(screen, pygame.Color(45, 45, 45), (12, 65, 576, 310))
+    pygame.draw.rect(screen, pygame.Color(90, 90, 90), (12, 65, 576, 310), 3)
     tit_score = font.render("Выберите сложность игры:", True, pygame.Color(225, 225, 225))
     text_x = 23
-    text_y = 325
+    text_y = 335
     screen.blit(tit_score, (text_x, text_y))
 
-    easy = pygame.draw.rect(screen, pygame.Color("green"), (400, 320, 30, 30))
-    norm = pygame.draw.rect(screen, pygame.Color("yellow"), (435, 320, 30, 30))
-
-    hard = pygame.draw.rect(screen, pygame.Color("red"), (470, 320, 30, 30))
+    easy = pygame.draw.rect(screen, pygame.Color("green"), (400, 330, 30, 30))
+    norm = pygame.draw.rect(screen, pygame.Color("yellow"), (435, 330, 30, 30))
+    hard = pygame.draw.rect(screen, pygame.Color("red"), (470, 330, 30, 30))
     for line in intro_text:
         string_rendered = font.render(line, 1, pygame.Color(225, 225, 225))
         intro_rect = string_rendered.get_rect()
@@ -128,7 +127,7 @@ def finish_screen(scokchik=0, linchik=0):
     font2 = pygame.font.Font(None, 30)
     pygame.draw.rect(screen, pygame.Color(45, 45, 45), (12, 55, 576, 310))
     pygame.draw.rect(screen, pygame.Color(90, 90, 90), (12, 55, 576, 310), 3)
-    tit_score = font.render("ИГРА ОКОНЧЕНА.", True, pygame.Color(225, 225, 225))
+    tit_score = font.render("GAME OVER.", True, pygame.Color(225, 225, 225))
     text_x = 120
     text_y = 100
     screen.blit(tit_score, (text_x, text_y))
@@ -151,7 +150,7 @@ def finish_screen(scokchik=0, linchik=0):
     rect.x = 395
     rect.y = 100
     rect.topright = (250, 230)
-    screen.blit(string, rect)
+    screen.blit(tring, rect)
 
 
     tit_score = font2.render("Чтобы продолжить, выберите режим:", True, pygame.Color(225, 225, 225))
@@ -168,6 +167,10 @@ def finish_screen(scokchik=0, linchik=0):
     text_x = 255
     text_y = 330
     screen.blit(tit_score, (text_x, text_y))
+
+    pygame.mixer.music.stop()
+    pygame.mixer.music.load('data/game_over.mp3')
+    pygame.mixer.music.play(loops=-1)
 
 
     while True:
@@ -402,11 +405,6 @@ def print_o():
     rect.topright = (534.25, 437)
     screen.blit(string, rect)
 
-def obnul_rec():
-    with open("record", "w") as f:
-        f.write("0")
-    return
-
 
 pygame.init()
 pygame.font.init()
@@ -473,8 +471,6 @@ while True:
     move_left = False
     move_down = False
 
-    fall_speed = fall_speed
-
     while playing:
         if not figure:
             col = randint(0, 3)
@@ -483,8 +479,6 @@ while True:
             if not move_is_possible(figure):
                 set_record(rec, score)
                 playing = False
-                finish_screen(score)
-                pygame.mixer.music.stop()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
@@ -564,3 +558,5 @@ while True:
         pictures_group.draw(screen)
         draw_name()
         pygame.display.flip()
+    finish_screen(scokchik=score, linchik=points)
+
