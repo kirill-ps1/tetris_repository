@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+from pickletools import long1
 
 import pygame
 from random import choice, randint
@@ -9,7 +10,7 @@ FPS = 20
 WIDTH, HEIGHT = 600, 620
 BLOCK, CUP_H, CUP_W = 25, 20, 10
 FIGURE_W, FIGURE_H = 5, 5
-    #picture of animation
+# picture of animation
 
 COLORS = {'S': 'red',
           'Z': 'orange',
@@ -108,14 +109,84 @@ def start_screen():
             elif ev.type == pygame.MOUSEBUTTONUP:
                 mouse_position = pygame.mouse.get_pos()
                 if easy.collidepoint(mouse_position):
-                    fall_speed = 0.75
+                    fall_speed = 0.5
                     return 1
                 elif norm.collidepoint(mouse_position):
-                    fall_speed = 0.5
+                    fall_speed = 0.35
                     return 2
                 elif hard.collidepoint(mouse_position):
-                    fall_speed = 0.25
+                    fall_speed = 0.2
                     return 3
+        pygame.display.flip()
+        clock.tick(FPS)
+
+
+def finish_screen(scokchik=0, linchik=0):
+    global fall_speed
+    font = pygame.font.Font(None, 60)
+    font1 = pygame.font.Font(None, 35)
+    font2 = pygame.font.Font(None, 30)
+    pygame.draw.rect(screen, pygame.Color(45, 45, 45), (12, 55, 576, 310))
+    pygame.draw.rect(screen, pygame.Color(90, 90, 90), (12, 55, 576, 310), 3)
+    tit_score = font.render("ИГРА ОКОНЧЕНА.", True, pygame.Color(225, 225, 225))
+    text_x = 120
+    text_y = 100
+    screen.blit(tit_score, (text_x, text_y))
+    tit_score = font1.render("SCORE:", True, pygame.Color(225, 225, 225))
+    text_x = 50
+    text_y = 200
+    screen.blit(tit_score, (text_x, text_y))
+    string = font1.render(str(scokchik), 1, pygame.Color(225, 225, 225))
+    rect = string.get_rect()
+    rect.x = 395
+    rect.y = 100
+    rect.topright = (250, 200)
+    screen.blit(string, rect)
+    tit_score = font1.render("LAYERS:", True, pygame.Color(225, 225, 225))
+    text_x = 50
+    text_y = 230
+    screen.blit(tit_score, (text_x, text_y))
+    tring = font1.render(str(linchik), 1, pygame.Color(225, 225, 225))
+    rect = string.get_rect()
+    rect.x = 395
+    rect.y = 100
+    rect.topright = (250, 230)
+    screen.blit(string, rect)
+
+
+    tit_score = font2.render("Чтобы продолжить, выберите режим:", True, pygame.Color(225, 225, 225))
+    text_x = 30
+    text_y = 280
+    screen.blit(tit_score, (text_x, text_y))
+
+    kon_e = pygame.draw.rect(screen, pygame.Color("green"), (420, 275, 30, 30))
+    kon_n = pygame.draw.rect(screen, pygame.Color("yellow"), (455, 275, 30, 30))
+    kon_h = pygame.draw.rect(screen, pygame.Color("red"), (490, 275, 30, 30))
+    kon_vse = pygame.draw.rect(screen, pygame.Color("black"), (230, 320, 100, 35))
+    pygame.draw.rect(screen, pygame.Color(90, 90, 90), (230, 320, 100, 35), 3)
+    tit_score = font2.render("EXIT", True, pygame.Color(225, 225, 225))
+    text_x = 255
+    text_y = 330
+    screen.blit(tit_score, (text_x, text_y))
+
+
+    while True:
+        for ev in pygame.event.get():
+            if ev.type == pygame.QUIT:
+                terminate()
+            elif ev.type == pygame.MOUSEBUTTONUP:
+                mouse_position = pygame.mouse.get_pos()
+                if kon_e.collidepoint(mouse_position):
+                    fall_speed = 0.5
+                    return
+                elif kon_n.collidepoint(mouse_position):
+                    fall_speed = 0.35
+                    return
+                elif kon_h.collidepoint(mouse_position):
+                    fall_speed = 0.2
+                    return
+                elif kon_vse.collidepoint(mouse_position):
+                    terminate()
         pygame.display.flip()
         clock.tick(FPS)
 
@@ -148,17 +219,18 @@ class Animation(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(load_image(anim_image), (w, h))
         self.rect = self.image.get_rect()
         self.pic = pic
-        self.rect.x = x #400
-        self.rect.y = y #300
+        self.rect.x = x  # 400
+        self.rect.y = y  # 300
         self.w, self.h = w, h
         self.count = 0
         self.time = time.time()
 
     def update(self):
         if time.time() - self.time > 0.05:
-             self.count = (self.count + 1) % len(self.pic)
-             self.image = pygame.transform.scale(self.pic[self.count], (self.w, self.h))
-             self.time = time.time()
+            self.count = (self.count + 1) % len(self.pic)
+            self.image = pygame.transform.scale(self.pic[self.count], (self.w, self.h))
+            self.time = time.time()
+
 
 def generate_level(lev):
     x1, y2 = None, None
@@ -305,6 +377,7 @@ def draw_layers_counter(layers):
     rect.topright = (503, 355)
     screen.blit(string, rect)
 
+
 def get_record():
     try:
         with open("record") as f:
@@ -320,6 +393,19 @@ def set_record(r, sc):
     with open("record", "w") as f:
         f.write(str(r))
 
+def print_o():
+    f = pygame.font.Font(None, 25)
+    string = f.render("0", 1, pygame.Color(255, 255, 255))
+    rect = string.get_rect()
+    rect.x = 40
+    rect.y = 40
+    rect.topright = (534.25, 437)
+    screen.blit(string, rect)
+
+def obnul_rec():
+    with open("record", "w") as f:
+        f.write("0")
+    return
 
 
 pygame.init()
@@ -397,7 +483,8 @@ while True:
             if not move_is_possible(figure):
                 set_record(rec, score)
                 playing = False
-
+                finish_screen(score)
+                pygame.mixer.music.stop()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
@@ -419,6 +506,7 @@ while True:
                     move_right = False
                     move_left = True
                     move_down = False
+
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_SPACE:
