@@ -411,7 +411,6 @@ pygame.font.init()
 pygame.mixer.init()
 pygame.mixer.music.set_volume(0.7)
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.mixer.music.load('data/tetris.mp3')
 pygame.display.set_caption('Тетрис')
 clock = pygame.time.Clock()
 start_screen()
@@ -451,6 +450,7 @@ tile_images = {
 
 while True:
     rec = "".join(get_record())
+    pygame.mixer.music.load('data/tetris.mp3')
     pygame.mixer.music.play(loops=-1)
     cup = [['o'] * CUP_H for _ in range(CUP_W)]
     x, y = generate_level(cup)
